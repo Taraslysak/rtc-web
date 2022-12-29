@@ -9,9 +9,15 @@ readme = "README.md"
 python = "^3.11"
 uvicorn = {extras = ["standard"], version = "^0.20.0"}
 fastapi = "^0.88.0"
-pydantic = "^1.10.2"
+pydantic = {extras = ["email"], version = "^1.10.2"}
 flake8 = "^6.0.0"
 black = "^22.12.0"
+redis = "^4.4.0"
+pytest-mock-resources = {extras = ["redis"], version = "^2.6.5"}
+httpx = "^0.23.1"
+passlib = "^1.7.4"
+uuid = "^1.30"
+bcrypt = "^4.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
