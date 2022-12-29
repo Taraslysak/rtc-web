@@ -2,6 +2,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from redis import Redis
 from app.constants import TableNames
+from app.schemas.tokens import Token
 from app.schemas.user import User, UserRegister
 
 from app.store import get_store
@@ -43,22 +44,23 @@ def test_login(client: TestClient, store: Redis):
 
     res = client.post(
         "/auth/login",
-        data={"username": dummy["username"], "password": dummy["password"]},
+        data={"email": dummy["email"], "password": dummy["password"]},
     )
     assert res
     assert res.status_code == status.HTTP_200_OK
 
     data = res.json()
-    assert len(data.token) > 0
+    data_schema = Token(**data)
+    assert len(data_schema.access_token) > 0
 
     user_in_db = store.hgetall(f"{TableNames.USERS}:{dummy['email']}")
     user_model = User(**user_in_db)
-    assert user_model.online != 0
+    assert user_model.logged_in
 
     # test wrong username
 
     res = client.post(
-        "/auth/login", data={"username": "BAD_USERNAME", "password": "dummy_password1"}
+        "/auth/login", data={"email": "BAD_USERNAME", "password": "dummy_password1"}
     )
     assert res
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
@@ -66,7 +68,7 @@ def test_login(client: TestClient, store: Redis):
     # test wrong password
 
     res = client.post(
-        "/auth/login", data={"username": "user1", "password": "BAD_PASSWORD"}
+        "/auth/login", data={"email": "user1", "password": "BAD_PASSWORD"}
     )
     assert res
     assert res.status_code == status.HTTP_401_UNAUTHORIZED

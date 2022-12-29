@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "fastapi",
+        "hgetall",
         "hmset",
         "passlib",
         "pydantic"

@@ -2,6 +2,7 @@ from redis import Redis
 from app.constants import TableNames
 
 from app.schemas.user import User
+from app.utils.hash import make_hash
 
 DUMMY_USERS = [
     {
@@ -34,5 +35,6 @@ DUMMY_USERS = [
 def fill_mock_data(store: Redis):
     for user in DUMMY_USERS:
         user_schema = User(**user)
+        user_schema.password = make_hash(user_schema.password)
         store.hmset(f"{TableNames.USERS}:{user_schema.email}", user_schema.dict())
     return
