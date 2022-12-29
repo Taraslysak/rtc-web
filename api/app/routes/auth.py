@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException
 from app.constants import TableNames
 from app.forms.register_fom import RegisterRequestForm
 from app.schemas import UserRegister, User, TokenData, Token
-from app.services.auth import create_access_token
+from app.services.auth import create_access_token, get_current_user
 from app.store import get_store
 from app.utils.hash import hash_verify, make_hash
 
@@ -55,3 +55,11 @@ async def login(
         access_token=create_access_token(TokenData(email=user_model.email).dict()),
         token_type="bearer",
     )
+
+
+@auth_router.post("/logout")
+async def logout(
+    user: User = Depends(get_current_user), store: Redis = Depends(get_store)
+):
+    user.logged_in = 0
+    store.hmset(f"{TableNames.USERS}:{user.email}", user.dict())

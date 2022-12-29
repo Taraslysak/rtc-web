@@ -75,4 +75,23 @@ def test_login(client: TestClient, store: Redis):
 
 
 def test_logout(client: TestClient, store: Redis):
-    return
+    fill_mock_data(store)
+
+    dummy = DUMMY_USERS[0]
+
+    login_res = client.post(
+        "/auth/login",
+        data={"email": dummy["email"], "password": dummy["password"]},
+    )
+
+    data_schema = Token(**login_res.json())
+
+    logout_res = client.post(
+        "auth/logout", headers={"Authorization": f"Bearer {data_schema.access_token}"}
+    )
+    assert logout_res
+    assert logout_res.status_code == status.HTTP_200_OK
+
+    user_in_db = store.hgetall(f"{TableNames.USERS}:{dummy['email']}")
+    user_model = User(**user_in_db)
+    assert not user_model.logged_in

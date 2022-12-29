@@ -34,9 +34,9 @@ def create_access_token(data: dict):
 def verify_access_token(token: str, credentials_exception) -> TokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY)
-        email: str = payload.get("user_email")
+        email: str = payload.get("email")
 
-        if not id:
+        if not email:
             raise credentials_exception
 
         token_data = TokenData(email=email)
@@ -59,7 +59,7 @@ def get_current_user(
 
     user_model = User(**user)
 
-    if not user_model.online:
+    if not user_model.logged_in:
         raise CREDENTIALS_EXCEPTION
 
     return user_model
