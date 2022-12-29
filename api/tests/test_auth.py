@@ -1,13 +1,11 @@
 from fastapi import status
 from fastapi.testclient import TestClient
 from redis import Redis
+
 from app.constants import TableNames
 from app.schemas.tokens import Token
 from app.schemas.user import User, UserRegister
 
-from app.store import get_store
-
-# from tests.conftest import mock_store_in_place
 from tests.mock_data import DUMMY_USERS, fill_mock_data
 
 

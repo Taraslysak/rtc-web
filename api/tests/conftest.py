@@ -7,7 +7,6 @@ from redis import Redis
 
 from app.main import app
 from app.store import get_store
-from tests.mock_data import fill_mock_data
 
 
 @pytest.fixture
