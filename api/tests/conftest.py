@@ -16,21 +16,18 @@ def client() -> Generator:
         yield c
 
 
-store = create_redis_fixture()
+redis_fixture = create_redis_fixture()
 
 
-def mock_store_in_place(app, store):
+@pytest.fixture
+def store(redis_fixture):
+    redis = Redis(
+        **redis_fixture.pmr_credentials.as_redis_kwargs(), decode_responses=True
+    )
+
     def mock_get_store():
-        return Redis(**store.pmr_credentials.as_redis_kwargs())
+        return redis
 
     app.dependency_overrides[get_store] = mock_get_store
 
-
-# @pytest.fixture
-# def store() -> Generator:
-
-
-#     # generate test data
-#     fill_mock_data(store)
-
-#     yield store
+    yield redis

@@ -10,5 +10,6 @@ class UserRegister(UserIn):
     email: EmailStr
 
 
-class UserModel(UserRegister):
+class User(UserRegister):
     online: int
+    logged_in: int = 0
