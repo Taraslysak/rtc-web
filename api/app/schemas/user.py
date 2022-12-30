@@ -13,3 +13,4 @@ class UserRegister(UserIn):
 class User(UserRegister):
     online: int
     logged_in: int = 0
+    connection_id: str = ""

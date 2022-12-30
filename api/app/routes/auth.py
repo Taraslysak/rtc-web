@@ -4,9 +4,10 @@ from fastapi.routing import APIRouter
 from fastapi.exceptions import HTTPException
 
 from app.constants import TableNames
+from app.dependencies.auth import get_current_user
 from app.forms.register_fom import RegisterRequestForm
 from app.schemas import UserRegister, User, TokenData, Token
-from app.services.auth import create_access_token, get_current_user
+from app.services.auth import create_access_token
 from app.store import get_store
 from app.utils.hash import hash_verify, make_hash
 
