@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from redis import Redis
 from app.constants import TableNames
 from app.dependencies.auth import get_current_user

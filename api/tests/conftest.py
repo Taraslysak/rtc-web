@@ -4,12 +4,12 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from pytest_mock_resources import create_redis_fixture
 from redis import Redis
-from app.constants import TableNames
-from app.schemas import User, Token
-from tests.mock_data import DUMMY_USERS, fill_mock_data
 
 from app.main import app
+from app.schemas import User, Token
 from app.store import get_store
+
+from tests.mock_data import DUMMY_USERS, fill_mock_data
 
 
 @pytest.fixture

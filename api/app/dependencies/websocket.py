@@ -1,4 +1,4 @@
-from fastapi import Depends, Query, WebSocket, WebSocketException, status
+from fastapi import Depends, Query, WebSocketException, status
 from redis import Redis
 from app.constants import TableNames
 from app.schemas.user import User
