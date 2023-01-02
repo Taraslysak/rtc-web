@@ -1,3 +1,4 @@
+import json
 from fastapi.testclient import TestClient
 from redis import Redis
 
@@ -18,12 +19,20 @@ def test_websocket_connect(authorized_client: TestClient, store: Redis):
     ) as websocket:
         data = websocket.receive_json()
         assert data == {
-            "users_online": [
-                DUMMY_USERS[0]["email"],
+            "message_type": "users_online",
+            "payload": [
+                DUMMY_USERS[3]["email"],
                 DUMMY_USERS[1]["email"],
-                DUMMY_USERS[4]["email"],
-            ]
+                DUMMY_USERS[0]["email"],
+            ],
         }
-        user = User(store.hgetall(f"{TableNames.USERS}:{DUMMY_USERS[0]['email']}"))
+        user = User.parse_obj(
+            store.hgetall(f"{TableNames.USERS}:{DUMMY_USERS[0]['email']}")
+        )
         assert user
         assert user.online
+        websocket.send_json(json.dumps({"message_type": "ping"}))
+        pong_json = websocket.receive_json()
+        pong_data = json.loads(pong_json)
+        assert pong_data["message_type"] == "pong"
+        websocket.close()
