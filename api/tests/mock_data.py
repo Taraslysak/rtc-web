@@ -36,5 +36,7 @@ def fill_mock_data(store: Redis):
     for user in DUMMY_USERS:
         user_schema = User(**user)
         user_schema.password = make_hash(user_schema.password)
-        store.hmset(f"{TableNames.USERS}:{user_schema.email}", user_schema.dict())
+        store.hset(
+            f"{TableNames.USERS}:{user_schema.email}", mapping=user_schema.dict()
+        )
     return

@@ -18,14 +18,15 @@ def test_websocket_connect(authorized_client: TestClient, store: Redis):
         f"/ws/webrtc?token={data.ws_token}",
     ) as websocket:
         data = websocket.receive_json()
-        assert data == {
-            "message_type": "users_online",
-            "payload": [
-                DUMMY_USERS[3]["email"],
-                DUMMY_USERS[1]["email"],
-                DUMMY_USERS[0]["email"],
-            ],
-        }
+        assert data["message_type"] == "users_online"
+        online_users = data["payload"]
+        online_users.sort()
+        assert online_users == [
+            DUMMY_USERS[0]["email"],
+            DUMMY_USERS[1]["email"],
+            DUMMY_USERS[3]["email"],
+        ]
+
         user = User.parse_obj(
             store.hgetall(f"{TableNames.USERS}:{DUMMY_USERS[0]['email']}")
         )

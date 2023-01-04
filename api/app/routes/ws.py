@@ -8,6 +8,7 @@ from app.schemas.tokens import WsToken, WsTokenData
 from app.services.auth import create_access_token
 from app.services.web_socket import connection_service
 from app.utils.uuid import gen_uid
+from app.config import settings
 
 from app.schemas import User
 from app.store import get_store
@@ -22,11 +23,13 @@ async def get_ws_token(
 ) -> WsToken:
     user.connection_id = gen_uid()
 
-    store.hmset(f"{TableNames.USERS}:{user.email}", user.dict())
+    store.hset(f"{TableNames.USERS}:{user.email}", mapping=user.dict())
 
     ws_token_data = WsTokenData(email=user.email, connection_id=user.connection_id)
 
-    ws_token = create_access_token(data=ws_token_data.dict(), minutes=1)
+    ws_token = create_access_token(
+        data=ws_token_data.dict(), minutes=settings.WS_TOKEN_EXPIRE_MINUTES
+    )
 
     return WsToken(ws_token=ws_token, token_type="Bearer")
 
@@ -40,7 +43,7 @@ async def webrtc_websocket(
     await connection_service.connect(email=current_user.email, websocket=websocket)
 
     current_user.online = 1
-    store.hmset(f"{TableNames.USERS}:{current_user.email}", current_user.dict())
+    store.hset(f"{TableNames.USERS}:{current_user.email}", mapping=current_user.dict())
 
     users_keys = store.keys(f"{TableNames.USERS}:*")
 
