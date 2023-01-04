@@ -1,0 +1,3 @@
+[submodule "api/redis_om"]
+	path = api/redis_om
+	url = git@github.com:redis/redis-om-python.git
