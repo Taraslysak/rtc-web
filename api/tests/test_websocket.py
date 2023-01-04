@@ -1,6 +1,7 @@
 import json
 from fastapi.testclient import TestClient
 from redis import Redis
+from starlette.testclient import WebSocketTestSession
 
 from app.constants import TableNames
 from app.schemas.tokens import WsToken
@@ -17,6 +18,7 @@ def test_websocket_connect(authorized_client: TestClient, store: Redis):
     with authorized_client.websocket_connect(
         f"/ws/webrtc?token={data.ws_token}",
     ) as websocket:
+        websocket: WebSocketTestSession = websocket
         data = websocket.receive_json()
         assert data["message_type"] == "users_online"
         online_users = data["payload"]
@@ -36,4 +38,4 @@ def test_websocket_connect(authorized_client: TestClient, store: Redis):
         pong_json = websocket.receive_json()
         pong_data = json.loads(pong_json)
         assert pong_data["message_type"] == "pong"
-        websocket.close()
+        # websocket.close()
