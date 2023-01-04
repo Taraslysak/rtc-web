@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     REDIS_PASS: str = "dummy_pass"
     JWT_SECRET: str = "dummy_secret"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    WS_TOKEN_EXPIRE_MINUTES: int = 1
 
     class Config:
         env_file = ".env"

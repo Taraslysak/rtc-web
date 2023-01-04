@@ -1,29 +1,17 @@
-from fastapi import Depends, HTTPException
-from redis import Redis
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from fastapi.security import OAuth2PasswordBearer
-from app.constants import TableNames
 
-from app.schemas import User, TokenData
-from app.store import get_store
+from app.schemas import TokenData, WsTokenData
 from app.config import settings
 
-CREDENTIALS_EXCEPTION = HTTPException(
-    status_code=404,
-    detail="Could not validate credentials",
-    headers={"WWW-Authenticate": "Bearer"},
-)
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 SECRET_KEY = settings.JWT_SECRET
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=minutes)
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY)
@@ -46,20 +34,17 @@ def verify_access_token(token: str, credentials_exception) -> TokenData:
     return token_data
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    store: Redis = Depends(get_store),
-) -> User:
+def verify_ws_token(token: str, ws_exception) -> WsTokenData:
+    try:
+        payload = jwt.decode(token, SECRET_KEY)
+        email: str = payload.get("email")
+        connection_id: str = payload.get("connection_id")
 
-    token_data: TokenData = verify_access_token(token, CREDENTIALS_EXCEPTION)
-    user = store.hgetall(f"{TableNames.USERS}:{token_data.email}")
+        if not email or not connection_id:
+            raise ws_exception
 
-    if not user:
-        raise CREDENTIALS_EXCEPTION
+        token_data = WsTokenData(email=email, connection_id=connection_id)
+    except JWTError:
+        raise ws_exception
 
-    user_model = User(**user)
-
-    if not user_model.logged_in:
-        raise CREDENTIALS_EXCEPTION
-
-    return user_model
+    return token_data

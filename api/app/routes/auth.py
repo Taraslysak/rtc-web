@@ -4,9 +4,10 @@ from fastapi.routing import APIRouter
 from fastapi.exceptions import HTTPException
 
 from app.constants import TableNames
+from app.dependencies.auth import get_current_user
 from app.forms.register_fom import RegisterRequestForm
 from app.schemas import UserRegister, User, TokenData, Token
-from app.services.auth import create_access_token, get_current_user
+from app.services.auth import create_access_token
 from app.store import get_store
 from app.utils.hash import hash_verify, make_hash
 
@@ -26,7 +27,7 @@ async def register(user_data: UserRegister, store: Redis = Depends(get_store)):
     user_data.password = make_hash(user_data.password)
     user_to_save = User(**user_data.dict(), online=0)
 
-    store.hmset(f"{TableNames.USERS}:{user_to_save.email}", user_to_save.dict())
+    store.hset(f"{TableNames.USERS}:{user_to_save.email}", mapping=user_to_save.dict())
 
     return
 
@@ -50,7 +51,7 @@ async def login(
             detail="Incorrect username or password",
         )
     user_model.logged_in = 1
-    store.hmset(f"{TableNames.USERS}:{form_data.email}", user_model.dict())
+    store.hset(f"{TableNames.USERS}:{form_data.email}", mapping=user_model.dict())
     return Token(
         access_token=create_access_token(TokenData(email=user_model.email).dict()),
         token_type="bearer",
@@ -62,4 +63,4 @@ async def logout(
     user: User = Depends(get_current_user), store: Redis = Depends(get_store)
 ):
     user.logged_in = 0
-    store.hmset(f"{TableNames.USERS}:{user.email}", user.dict())
+    store.hset(f"{TableNames.USERS}:{user.email}", mapping=user.dict())
