@@ -1,5 +1,7 @@
 from fastapi import status
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
+import pytest
 from redis import Redis
 
 from app.constants import TableNames
@@ -9,7 +11,10 @@ from app.schemas.user import User, UserRegister
 from tests.mock_data import DUMMY_USERS, fill_mock_data
 
 
-def test_register(client: TestClient, store: Redis):
+@pytest.mark.asyncio
+async def test_register(client: AsyncClient, store: Redis):
+    from app import models as m
+
     # mock_store_in_place(client.app, store)
     # Test successful registration
     user_data = UserRegister(
@@ -18,16 +23,16 @@ def test_register(client: TestClient, store: Redis):
         password="dummy_password",
     )
 
-    response = client.post("/auth/register", json=user_data.dict())
+    response = await client.post("/auth/register", json=user_data.dict())
     assert response
     assert response.status_code == status.HTTP_201_CREATED
 
     # Test filed registration with same credentials
-    fail_response = client.post("/auth/register", json=user_data.dict())
+    fail_response = await client.post("/auth/register", json=user_data.dict())
     assert fail_response
     assert fail_response.status_code == status.HTTP_403_FORBIDDEN
 
-    user = store.hgetall(f"{TableNames.USERS}:{user_data.email}")
+    user = await m.User.find(m.User.email == user_data.email).first()
     assert user
     user_model = User(**user)
     assert user_model.username == user_data.username

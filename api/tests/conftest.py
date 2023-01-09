@@ -1,28 +1,25 @@
 import pytest
+from httpx import AsyncClient
 from typing import Generator
 from fastapi import status
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from pytest_mock_resources import create_redis_fixture
 from redis import Redis
 
-from app.main import app
+from app.app import create_app
 from app.schemas import User, Token
-from app.store import get_store
 
 from tests.mock_data import DUMMY_USERS, fill_mock_data
-
-
-@pytest.fixture
-def client() -> Generator:
-    with TestClient(app) as c:
-        yield c
 
 
 redis_fixture = create_redis_fixture()
 
 
-@pytest.fixture
-def store(redis_fixture):
+@pytest_asyncio.fixture
+async def client(redis_fixture, monkeypatch: pytest.MonkeyPatch) -> Generator:
+    import app.store
+
     redis = Redis(
         **redis_fixture.pmr_credentials.as_redis_kwargs(), decode_responses=True
     )
@@ -30,7 +27,23 @@ def store(redis_fixture):
     def mock_get_store():
         return redis
 
-    app.dependency_overrides[get_store] = mock_get_store
+    monkeypatch.setattr(app.store, "get_store", mock_get_store)
+    app = create_app()
+    from app import models
+
+    from redis_om import Migrator
+
+    await Migrator().run()
+
+    async with AsyncClient(app=app, base_url="http://test") as c:
+        yield c
+
+
+@pytest.fixture
+def store(client: TestClient, redis_fixture):
+    redis = Redis(
+        **redis_fixture.pmr_credentials.as_redis_kwargs(), decode_responses=True
+    )
 
     yield redis
 

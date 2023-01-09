@@ -39,3 +39,7 @@ def test_websocket_connect(authorized_client: TestClient, store: Redis):
         pong_data = json.loads(pong_json)
         assert pong_data["message_type"] == "pong"
         # websocket.close()
+
+
+def test_web_rtc_exchange(authorized_client: TestClient):
+    pass
