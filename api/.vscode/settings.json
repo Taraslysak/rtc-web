@@ -1,15 +1,16 @@
 {
-    "cSpell.words": [
-        "fastapi",
-        "hgetall",
-        "hmset",
-        "passlib",
-        "pydantic",
-        "webrtc"
-    ],
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+  "cSpell.words": [
+    "autoflush",
+    "fastapi",
+    "hgetall",
+    "hmset",
+    "passlib",
+    "pydantic",
+    "sessionmaker",
+    "sqlalchemy",
+    "webrtc"
+  ],
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }
