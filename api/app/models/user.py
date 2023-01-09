@@ -1,4 +1,3 @@
-from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, func, or_
 
 from app.utils.hash import make_hash, hash_verify

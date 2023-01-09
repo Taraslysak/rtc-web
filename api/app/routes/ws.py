@@ -11,7 +11,6 @@ from app.services.auth import create_access_token
 from app.services.web_socket import connection_service
 from app.utils.uuid import gen_uid
 from app.config import settings
-from app.schemas import User
 
 
 ws_router = APIRouter(prefix="/ws", tags=["ws"])
@@ -47,7 +46,7 @@ async def webrtc_websocket(
     db.commit()
     db.refresh(current_user)
 
-    users_online = db.query(m.User).filter(m.User.online == True).all()
+    users_online = db.query(m.User).filter(m.User.online).all()
 
     broadcast_payload = {
         "message_type": "users_online",

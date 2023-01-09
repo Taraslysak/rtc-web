@@ -9,9 +9,9 @@ from app import models as m
 from app.dependencies.auth import get_current_user
 from app.forms.register_fom import RegisterRequestForm
 from app.logger import log
-from app.schemas import UserRegister, User, TokenData, Token
+from app.schemas import UserRegister, TokenData, Token
 from app.services.auth import create_access_token
-from app.utils.hash import hash_verify, make_hash
+from app.utils.hash import hash_verify
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -22,12 +22,10 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
         new_user = m.User(**user_data.dict())
         db.add(new_user)
         db.commit()
-    except IntegrityError as e:
-        log(log.INFO, "User [%s] already exists".format(user_data.email))
+    except IntegrityError:
+        log(log.INFO, "User {} already exists".format(user_data.email))
         db.rollback()
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    except Exception as e:
-        log(log.INFO, "User [%s] already exists".format(user_data.email))
 
     return
 

@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app import models as m
 
 from app.db import get_db
-from app.schemas.user import User
 from app.services.auth import verify_ws_token
 
 WS_EXCEPTION = WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
