@@ -1,15 +1,15 @@
 from fastapi import status
 from fastapi.testclient import TestClient
-from redis import Redis
+from sqlalchemy.orm import Session
 
-from app.constants import TableNames
+from app import models as m
 from app.schemas.tokens import Token
 from app.schemas.user import User, UserRegister
 
 from tests.mock_data import DUMMY_USERS, fill_mock_data
 
 
-def test_register(client: TestClient, store: Redis):
+def test_register(client: TestClient, db: Session):
     # mock_store_in_place(client.app, store)
     # Test successful registration
     user_data = UserRegister(
@@ -27,14 +27,14 @@ def test_register(client: TestClient, store: Redis):
     assert fail_response
     assert fail_response.status_code == status.HTTP_403_FORBIDDEN
 
-    user = store.hgetall(f"{TableNames.USERS}:{user_data.email}")
+    user = db.query(m.User).filter(m.User.email == user_data.email).first()
     assert user
-    user_model = User(**user)
+    user_model = User.from_orm(user)
     assert user_model.username == user_data.username
 
 
-def test_login(client: TestClient, store: Redis):
-    fill_mock_data(store)
+def test_login(client: TestClient, db: Session):
+    fill_mock_data(db)
 
     # test login success
 
@@ -51,9 +51,8 @@ def test_login(client: TestClient, store: Redis):
     data_schema = Token(**data)
     assert len(data_schema.access_token) > 0
 
-    user_in_db = store.hgetall(f"{TableNames.USERS}:{dummy['email']}")
-    user_model = User(**user_in_db)
-    assert user_model.logged_in
+    user_in_db = db.query(m.User).filter(m.User.email == dummy["email"]).first()
+    assert user_in_db.logged_in
 
     # test wrong username
 
@@ -72,8 +71,8 @@ def test_login(client: TestClient, store: Redis):
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_logout(client: TestClient, store: Redis):
-    fill_mock_data(store)
+def test_logout(client: TestClient, db: Session):
+    fill_mock_data(db)
 
     dummy = DUMMY_USERS[0]
 
@@ -90,6 +89,5 @@ def test_logout(client: TestClient, store: Redis):
     assert logout_res
     assert logout_res.status_code == status.HTTP_200_OK
 
-    user_in_db = store.hgetall(f"{TableNames.USERS}:{dummy['email']}")
-    user_model = User(**user_in_db)
+    user_model = db.query(m.User).filter(m.User.email == dummy["email"]).first()
     assert not user_model.logged_in

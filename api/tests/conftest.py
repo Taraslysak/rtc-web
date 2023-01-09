@@ -2,12 +2,12 @@ import pytest
 from typing import Generator
 from fastapi import status
 from fastapi.testclient import TestClient
-from pytest_mock_resources import create_redis_fixture
-from redis import Redis
+from pytest_mock_resources import create_postgres_fixture
+from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.schemas import User, Token
-from app.store import get_store
+from app.db import Base, get_db
 
 from tests.mock_data import DUMMY_USERS, fill_mock_data
 
@@ -18,26 +18,30 @@ def client() -> Generator:
         yield c
 
 
-redis_fixture = create_redis_fixture()
+db_fixture = create_postgres_fixture()
 
 
 @pytest.fixture
-def store(redis_fixture):
-    redis = Redis(
-        **redis_fixture.pmr_credentials.as_redis_kwargs(), decode_responses=True
+def db(db_fixture):
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=db_fixture
     )
 
-    def mock_get_store():
-        return redis
+    Base.metadata.drop_all(bind=db_fixture)
+    Base.metadata.create_all(bind=db_fixture)
+    with TestingSessionLocal() as db:
 
-    app.dependency_overrides[get_store] = mock_get_store
+        def override_get_db() -> Generator:
+            yield db
 
-    yield redis
+        app.dependency_overrides[get_db] = override_get_db
+
+        yield db
 
 
 @pytest.fixture
-def authorized_client(client: TestClient, store: Redis) -> Generator:
-    fill_mock_data(store)
+def authorized_client(client: TestClient, db) -> Generator:
+    fill_mock_data(db)
     user = User(**DUMMY_USERS[0])
     assert user
     res = client.post(

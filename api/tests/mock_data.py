@@ -1,8 +1,7 @@
-from redis import Redis
-from app.constants import TableNames
+from sqlalchemy.orm import Session
 
-from app.schemas.user import User
-from app.utils.hash import make_hash
+from app import models as m
+
 
 DUMMY_USERS = [
     {
@@ -32,11 +31,8 @@ DUMMY_USERS = [
 ]
 
 
-def fill_mock_data(store: Redis):
+def fill_mock_data(db: Session):
     for user in DUMMY_USERS:
-        user_schema = User(**user)
-        user_schema.password = make_hash(user_schema.password)
-        store.hset(
-            f"{TableNames.USERS}:{user_schema.email}", mapping=user_schema.dict()
-        )
-    return
+        user_to_add = m.User(**user)
+        db.add(user_to_add)
+        db.commit()
