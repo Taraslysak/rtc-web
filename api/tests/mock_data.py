@@ -36,3 +36,7 @@ def fill_mock_data(db: Session):
         user_to_add = m.User(**user)
         db.add(user_to_add)
         db.commit()
+
+
+MOCK_SDP_OFFER = "MOCK_SDP_OFFER"
+MOCK_SDP_ANSWER = "MOCK_SDP_ANSWER"

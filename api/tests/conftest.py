@@ -56,3 +56,22 @@ def authorized_client(client: TestClient, db) -> Generator:
         }
     )
     return client
+
+
+@pytest.fixture
+def authorized_opponent(client: TestClient, db) -> Generator:
+    # fill_mock_data(db)
+    user = User(**DUMMY_USERS[1])
+    assert user
+    res = client.post(
+        "/auth/login", data=dict(email=user.email, password=user.password)
+    )
+    assert res.status_code == status.HTTP_200_OK
+    token = Token.parse_obj(res.json())
+    assert token.access_token
+    client.headers.update(
+        {
+            "Authorization": f"Bearer {token.access_token}",
+        }
+    )
+    return client
