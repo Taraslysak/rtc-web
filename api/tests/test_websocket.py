@@ -1,13 +1,11 @@
 import pytest
 
-from mock import patch
 from fastapi.testclient import TestClient
 from starlette.testclient import WebSocketTestSession
 from sqlalchemy.orm import Session
 
 from app import models as m
 from app import schemas as s
-from app.routes.ws import connection_service
 
 from tests.mock_data import DUMMY_USERS, MOCK_SDP_OFFER
 
@@ -42,11 +40,6 @@ async def test_webrtc_exchange(authorized_client: TestClient, db: Session):
     sender_token_res = authorized_client.get("/ws/token")
     sender_data = s.WsToken.parse_obj(sender_token_res.json())
 
-    wrapped_send_personal = patch.object(
-        connection_service,
-        "send_personal_message",
-        wraps=connection_service.send_personal_message,
-    )
     with authorized_client.websocket_connect(
         f"/ws/webrtc?token={sender_data.ws_token}",
     ) as websocket:

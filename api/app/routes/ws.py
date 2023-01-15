@@ -65,7 +65,7 @@ async def webrtc_websocket(
                 json_data, connection_service, current_user
             )
 
-    except WebSocketDisconnect as e:
+    except WebSocketDisconnect:
         connection_service.disconnect(current_user.connection_id)
         await connection_service.broadcast(
             f"Client #{current_user.email} left the chat"
