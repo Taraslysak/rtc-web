@@ -4,7 +4,7 @@ from fastapi import WebSocket
 
 class ConnectionService:
     def __init__(self):
-        self.active_connections: dict[str:WebSocket] = {}
+        self.active_connections: dict[str, WebSocket] = {}
 
     async def connect(self, id: int, websocket: WebSocket):
         await websocket.accept()
@@ -16,7 +16,7 @@ class ConnectionService:
     ):
         del self.active_connections[id]
 
-    async def send_personal_message(self, id: str, message: Any):
+    async def send_personal_message(self, id: str, message: str):
         await self.active_connections[id].send_json(message)
 
     async def broadcast(self, message: Any):

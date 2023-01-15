@@ -20,7 +20,7 @@ services:
     restart: always
     command: bash ./start_server.sh
     environment:
-      DATABASE_URI: ${PROD_DATABASE_URI}
+      DATABASE_URI: ${DATABASE_URI}
     ports:
       - 127.0.0.1:8008:80
     depends_on:
@@ -39,7 +39,7 @@ services:
     environment:
       SCHEDULE: "@daily"
       POSTGRES_DATABASE: ${DATABASE_NAME:-db}
-      POSTGRES_HOST: db
+      POSTGRES_HOST: ${DATABASE_NAME:-db}
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_EXTRA_OPTS: "--schema=public --blobs"
