@@ -1,4 +1,3 @@
-import json
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
@@ -10,7 +9,7 @@ from app.dependencies.websocket import get_current_ws_user
 
 from app.services.auth import create_access_token
 from app.services.web_socket_connection import connection_service
-from app.services.web_socket_messageing import MESSAGE_HANDLER
+from app.services.web_socket_messaging import MESSAGE_HANDLER
 from app.utils.uuid import gen_uid
 from app.config import settings
 
@@ -66,7 +65,7 @@ async def webrtc_websocket(
                 json_data, connection_service, current_user
             )
 
-    except WebSocketDisconnect:
+    except WebSocketDisconnect as e:
         connection_service.disconnect(current_user.connection_id)
         await connection_service.broadcast(
             f"Client #{current_user.email} left the chat"
