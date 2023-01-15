@@ -6,18 +6,18 @@ class ConnectionService:
     def __init__(self):
         self.active_connections: dict[str:WebSocket] = {}
 
-    async def connect(self, email: str, websocket: WebSocket):
+    async def connect(self, id: int, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections[email] = websocket
+        self.active_connections[id] = websocket
 
     def disconnect(
         self,
-        email: str,
+        id: int,
     ):
-        del self.active_connections[email]
+        del self.active_connections[id]
 
-    async def send_personal_message(self, email: str, message: Any):
-        await self.active_connections[email].send_json(message)
+    async def send_personal_message(self, id: str, message: Any):
+        await self.active_connections[id].send_json(message)
 
     async def broadcast(self, message: Any):
         for connection in self.active_connections.values():

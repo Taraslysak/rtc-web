@@ -1,17 +1,49 @@
-
-version: '3.8'
+version: "3.8"
 services:
-  store:
-    image: redis/redis-stack
-    restart: always
-    ports:
-      - 127.0.0.1:${REDIS_PORT}:6379
-      - 127.0.0.1:${REDIS_INSIGHT_PORT}:6379
-    # command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
+  db:
+    image: postgres:12
     volumes:
-      - store:/data
+      - db_data:/var/lib/postgresql/data
     environment:
-      - REDIS_ARGS=--requirepass ${REDIS_PASS}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME:-db}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      PGUSER: ${DATABASE_USERNAME}
+      PGDATABASE: ${DATABASE_NAME:-db}
+      PGPASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - 127.0.0.1:${DATABASE_LOCAL_PORT}:5432
+    restart: always
+
+  app:
+    build: .
+    restart: always
+    command: bash ./start_server.sh
+    environment:
+      DATABASE_URI: ${PROD_DATABASE_URI}
+    ports:
+      - 127.0.0.1:8008:80
+    depends_on:
+      - db
+
+  backup:
+    build: pg-backup/
+    restart: always
+    volumes:
+      - ./backup:/backup
+      - ./:/app
+    links:
+      - db
+    env_file:
+      - .env
+    environment:
+      SCHEDULE: "@daily"
+      POSTGRES_DATABASE: ${DATABASE_NAME:-db}
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_EXTRA_OPTS: "--schema=public --blobs"
+      DAYS_HISTORY: 7
+
 volumes:
-  store:
-    driver: local
+  db_data:

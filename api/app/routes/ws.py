@@ -1,7 +1,9 @@
 import json
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
-from redis import Redis
-from app.constants import TableNames
+from sqlalchemy.orm import Session
+
+from app import models as m
+from app.db import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.websocket import get_current_ws_user
 from app.schemas.tokens import WsToken, WsTokenData
@@ -10,22 +12,20 @@ from app.services.web_socket import connection_service
 from app.utils.uuid import gen_uid
 from app.config import settings
 
-from app.schemas import User
-from app.store import get_store
-
 
 ws_router = APIRouter(prefix="/ws", tags=["ws"])
 
 
 @ws_router.get("/token")
 async def get_ws_token(
-    user: User = Depends(get_current_user), store: Redis = Depends(get_store)
+    user: m.User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> WsToken:
     user.connection_id = gen_uid()
 
-    store.hset(f"{TableNames.USERS}:{user.email}", mapping=user.dict())
+    db.commit()
+    db.refresh(user)
 
-    ws_token_data = WsTokenData(email=user.email, connection_id=user.connection_id)
+    ws_token_data = WsTokenData(id=user.id, connection_id=user.connection_id)
 
     ws_token = create_access_token(
         data=ws_token_data.dict(), minutes=settings.WS_TOKEN_EXPIRE_MINUTES
@@ -37,21 +37,20 @@ async def get_ws_token(
 @ws_router.websocket("/webrtc")
 async def webrtc_websocket(
     websocket: WebSocket,
-    current_user: User = Depends(get_current_ws_user),
-    store: Redis = Depends(get_store),
+    current_user: m.User = Depends(get_current_ws_user),
+    db: Session = Depends(get_db),
 ):
-    await connection_service.connect(email=current_user.email, websocket=websocket)
+    await connection_service.connect(id=current_user.id, websocket=websocket)
 
-    current_user.online = 1
-    store.hset(f"{TableNames.USERS}:{current_user.email}", mapping=current_user.dict())
+    current_user.online = True
+    db.commit()
+    db.refresh(current_user)
 
-    users_keys = store.keys(f"{TableNames.USERS}:*")
-
-    users = [User.parse_obj(store.hgetall(key)) for key in users_keys]
+    users_online = db.query(m.User).filter(m.User.online).all()
 
     broadcast_payload = {
         "message_type": "users_online",
-        "payload": [user.email for user in users if user.online],
+        "payload": [user.id for user in users_online],
     }
 
     await connection_service.broadcast(broadcast_payload)
@@ -61,7 +60,7 @@ async def webrtc_websocket(
             json_data = json.loads(ws_json)
             if json_data["message_type"] == "ping":
                 await connection_service.send_personal_message(
-                    current_user.email, json.dumps({"message_type": "pong"})
+                    current_user.id, json.dumps({"message_type": "pong"})
                 )
             print(json_data)
     except WebSocketDisconnect:

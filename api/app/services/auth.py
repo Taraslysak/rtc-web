@@ -22,12 +22,12 @@ def create_access_token(data: dict, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES):
 def verify_access_token(token: str, credentials_exception) -> TokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY)
-        email: str = payload.get("email")
+        id: str = payload.get("id")
 
-        if not email:
+        if not id:
             raise credentials_exception
 
-        token_data = TokenData(email=email)
+        token_data = TokenData(id=id)
     except JWTError:
         raise credentials_exception
 
@@ -37,13 +37,13 @@ def verify_access_token(token: str, credentials_exception) -> TokenData:
 def verify_ws_token(token: str, ws_exception) -> WsTokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY)
-        email: str = payload.get("email")
+        id: str = payload.get("id")
         connection_id: str = payload.get("connection_id")
 
-        if not email or not connection_id:
+        if not id or not connection_id:
             raise ws_exception
 
-        token_data = WsTokenData(email=email, connection_id=connection_id)
+        token_data = WsTokenData(id=id, connection_id=connection_id)
     except JWTError:
         raise ws_exception
 

@@ -12,7 +12,7 @@ class WsToken(BaseModel):
 
 
 class TokenData(BaseModel):
-    email: str | None
+    id: str | None
 
 
 class WsTokenData(TokenData):

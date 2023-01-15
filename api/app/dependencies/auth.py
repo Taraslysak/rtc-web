@@ -1,10 +1,9 @@
 from fastapi import Depends, HTTPException
-from redis import Redis
 from fastapi.security import OAuth2PasswordBearer
-from app.constants import TableNames
-from app.schemas import User, TokenData
+from app.db import SessionLocal, get_db
+from app.schemas import TokenData
 from app.services.auth import verify_access_token
-from app.store import get_store
+from app import models as m
 
 
 CREDENTIALS_EXCEPTION = HTTPException(
@@ -19,18 +18,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
-    store: Redis = Depends(get_store),
-) -> User:
+    db: SessionLocal = Depends(get_db),
+) -> m.User:
 
     token_data: TokenData = verify_access_token(token, CREDENTIALS_EXCEPTION)
-    user = store.hgetall(f"{TableNames.USERS}:{token_data.email}")
+    user = db.query(m.User).get(token_data.id)
 
-    if not user:
+    if not user or not user.logged_in:
         raise CREDENTIALS_EXCEPTION
 
-    user_model = User(**user)
-
-    if not user_model.logged_in:
-        raise CREDENTIALS_EXCEPTION
-
-    return user_model
+    return user
