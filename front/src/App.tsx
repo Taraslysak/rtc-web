@@ -1,11 +1,13 @@
 import { RouterProvider } from "react-router-dom";
-import { Background } from "./components/layout/Background/Background";
 import { router } from "./navigation";
+import { QueryProvider } from "./providers/QueryProvider/QueryProvider";
 
 function App() {
   return (
     <div className="flex w-full h-full">
-      <RouterProvider router={router} />;
+      <QueryProvider>
+        <RouterProvider router={router} />;
+      </QueryProvider>
     </div>
   );
 }
