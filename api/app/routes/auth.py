@@ -19,10 +19,11 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     try:
-        new_user = m.User(**user_data.dict())
+        new_user = m.User(**user_data.dict(), connection_id="")
         db.add(new_user)
         db.commit()
-    except IntegrityError:
+    except IntegrityError as e:
+        print(e)
         log(log.INFO, "User {} already exists".format(user_data.email))
         db.rollback()
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
@@ -30,7 +31,7 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
     return
 
 
-@auth_router.post("/login")
+@auth_router.post("/login", response_model=Token)
 async def login(
     form_data: RegisterRequestForm = Depends(), db: Session = Depends(get_db)
 ) -> Token:

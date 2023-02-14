@@ -1,9 +1,26 @@
 import { useState } from "react";
+import { useMutation } from "react-query";
 import { RectButton } from "../../../../../components/buttons";
+import { ErrorMessage } from "../../../../../components/ErrorMessage";
 import { Title } from "../../../../../components/Title";
+import { ApiError, AuthService, UserRegister } from "../../../../../services";
 import { TextInput } from "../../inputs";
 
-export function RegisterForm() {
+interface IRegisterFormProps {
+  onRegister: () => void;
+}
+
+export function RegisterForm({ onRegister }: IRegisterFormProps) {
+  const { mutate, error, isLoading } = useMutation<
+    typeof AuthService.authRegister,
+    ApiError,
+    UserRegister,
+    unknown
+  >(AuthService.authRegister, {
+    onSuccess: () => {
+      onRegister();
+    },
+  });
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
 
@@ -22,6 +39,13 @@ export function RegisterForm() {
   const onConfirmPasswordChange: React.ChangeEventHandler<HTMLInputElement> = (
     e
   ) => setConfirmPassword(e.target.value);
+
+  const handleRegister = () => {
+    if (!userName || !email || !password || password !== confirmPassword) {
+      return;
+    }
+    mutate({ username: userName, email, password });
+  };
 
   return (
     <>
@@ -60,11 +84,12 @@ export function RegisterForm() {
           type="password"
         />
       </div>
+      {error && <ErrorMessage message={error.body?.detail} />}
       <RectButton
         title={"REGISTER"}
-        onClick={() => {}}
-        disabled={false}
-        loading={false}
+        onClick={handleRegister}
+        disabled={isLoading}
+        loading={isLoading}
       />
     </>
   );
